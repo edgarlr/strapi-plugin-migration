@@ -1,0 +1,36 @@
+{
+  "name": "strapi-plugin-migration",
+  "version": "0.0.0",
+  "description": "This is the description of the plugin.",
+  "strapi": {
+    "name": "migration",
+    "description": "Description of migration plugin",
+    "kind": "plugin"
+  },
+  "bin": {
+    "strapi-migration": "./bin/strapi-migration"
+  },
+  "dependencies": {
+    "chalk": "4.1.2",
+    "commander": "^9.2.0",
+    "inquirer": "^8.2.2",
+    "pluralize": "^8.0.0",
+    "prettier": "^2.6.2"
+  },
+  "author": {
+    "name": "A Strapi developer"
+  },
+  "maintainers": [
+    {
+      "name": "A Strapi developer"
+    }
+  ],
+  "engines": {
+    "node": ">=12.x.x <=16.x.x",
+    "npm": ">=6.0.0"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@strapi/strapi": "^4.1.8"
+  }
+}
