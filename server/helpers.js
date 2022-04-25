@@ -1,7 +1,7 @@
 const chalk = require("chalk");
 const { requireOptional } = require("./utils.js");
-const pluralize = require("pluralize");
 const prettier = require("prettier");
+const resolveCwd = require("resolve-cwd");
 
 const colors = {
   red: [216, 16, 16],
@@ -33,11 +33,29 @@ module.exports.getConfig = () => {
 module.exports.logError = (error) => {
   console.info("\n");
   console.info(chalk.bold.rgb(...colors.red)("Error running migration."));
-  console.info(chalk.rgb(...colors.red)(error));
+  console.info(chalk.redBright(error));
 };
 
-module.exports.getCollectionNameFromId = (id) =>
-  pluralize.isSingular(id) ? id : pluralize.singular(id);
+module.exports.logValidationErrors = (error) => {
+  module.exports.logError(`ValidationErrors: ${error.details.errors.length}`);
+
+  if (error.details.errors) {
+    error.details.errors.map((error) => {
+      console.info("\n");
+      console.info(chalk.bold("Path: ") + error.path.join(" / "));
+      console.info(chalk.redBright(error.message));
+    });
+  }
+};
+
+module.exports.createValidationError = (
+  { path, message } = {
+    path: "Path not specified",
+    message: "Message not specified",
+  }
+) => {
+  return { details: { errors: [{ path, message }] } };
+};
 
 module.exports.buildPretiffier = (prettierConfig) => {
   let config = prettierConfig;
@@ -66,4 +84,23 @@ module.exports.buildPretiffier = (prettierConfig) => {
   }
 
   return (text) => prettier.format(text, { ...config, parser: "babel" });
+};
+
+module.exports.getLocalFile = (path) => {
+  const cmdPath = resolveCwd.silent(path);
+  if (!cmdPath) {
+    console.log(
+      `Error loading ${yellow(
+        path
+      )} file. Strapi might not be installed in your "node_modules". You may need to run "yarn install".`
+    );
+    process.exit(1);
+  }
+
+  try {
+    return require(cmdPath);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
 };
