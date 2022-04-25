@@ -4,11 +4,15 @@ const program = require("commander");
 const { version } = require("../package.json");
 const { join } = require("path");
 const migration = require("./lib/migration");
-
+const migrationIntent = require("./lib/migration-intent");
+const inquirer = require("inquirer");
 const config = getConfig();
 
+const app = require("@strapi/strapi");
+
+program.version(version, "-v", "Output the version number");
+
 program
-  .version(version)
   .arguments("<migrationPath>")
   .option(
     "-d, --dir <pathToDirectory>",
@@ -30,8 +34,39 @@ const getMigrationFunctionFromFile = (filePath) => {
   }
 };
 
-const [migrationPath] = program.args;
+const runCLI = async () => {
+  const strapi = await app().load();
 
-const migrationFunction = getMigrationFunctionFromFile(migrationPath);
+  console.info(chalk.bold.green("The following migration has been planned"));
+  try {
+    const [migrationPath] = program.args;
+    const migrationFunction = getMigrationFunctionFromFile(migrationPath);
 
-migrationFunction(migration);
+    // Validate Migration Function
+    await migrationFunction(migrationIntent);
+
+    const { applyMigration } = await inquirer.prompt([
+      {
+        type: "confirm",
+        message: "Do you want to apply the migration",
+        name: "applyMigration",
+      },
+    ]);
+
+    if (!applyMigration) {
+      console.warn(chalk.yellow("⚠️ Migration aborted"));
+      process.exit(0);
+    }
+
+    // Run Migration Function
+    await migrationFunction(migration);
+
+    console.info(chalk.bold.green("🚀 Migration successful"));
+    process.exit(0);
+  } catch (error) {
+    logError(error);
+    process.exit(1);
+  }
+};
+
+runCLI();

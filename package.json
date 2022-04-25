@@ -1,6 +1,6 @@
 {
   "name": "strapi-plugin-migration",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "This is the description of the plugin.",
   "strapi": {
     "name": "migration",
@@ -13,9 +13,13 @@
   "dependencies": {
     "chalk": "4.1.2",
     "commander": "^9.2.0",
+    "esm": "^3.2.25",
     "inquirer": "^8.2.2",
+    "node-plop": "^0.30.0",
     "pluralize": "^8.0.0",
-    "prettier": "^2.6.2"
+    "prettier": "^2.6.2",
+    "resolve-cwd": "^3.0.0",
+    "yup": "^0.32.11"
   },
   "author": {
     "name": "A Strapi developer"
@@ -31,6 +35,7 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@strapi/strapi": "^4.1.8"
+    "@strapi/strapi": "^4.1.8",
+    "@strapi/utils": "^4.1.8"
   }
 }
