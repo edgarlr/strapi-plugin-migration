@@ -32,8 +32,7 @@ module.exports.readFilePromise = (fileLocation) => {
 };
 
 module.exports.readFileRelativePromise = (fileLocation) => {
-  console.log(path.join(__dirname, fileLocation));
-  return readFilePromise(path.join(__dirname, fileLocation));
+  return module.exports.readFilePromise(path.join(__dirname, fileLocation));
 };
 
 module.exports.writeFilePromise = (fileLocation, fileContent) => {
@@ -50,9 +49,14 @@ module.exports.compile = (
 ) => {
   return (obj) =>
     text.replace(
-      new RegExp(`${start}(.+?)${end}`, "g"),
+      new RegExp(`${start} *(.+?) *${end}`, "g"),
       (_, offset) => obj[offset]
     );
 };
 
 module.exports.sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
+
+module.exports.splitAt = (string, index) => [
+  string.substring(0, index),
+  string.substring(index + 1),
+];
