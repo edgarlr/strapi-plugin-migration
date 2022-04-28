@@ -3,6 +3,7 @@ const { logError } = require("../../helpers");
 const { sleep } = require("../../utils");
 const { generateTemplate } = require("../generate-template");
 const { getContentTypePath, getComponentPath } = require("./helpers");
+const { snakeCase, paramCase } = require("change-case");
 
 module.exports.getContentTypeActions = (contentType, apiRoute) => {
   const contentTypePath = getContentTypePath(contentType);
@@ -82,14 +83,19 @@ module.exports.getContentTypeActions = (contentType, apiRoute) => {
       try {
         const componentPath = getComponentPath(
           "relation",
-          contentType.collectionName
+          paramCase(contentType.collectionName)
         );
 
         await generateTemplate({
           type: "create",
           path: componentPath,
           templateFile: "relation-component",
-          data: { ...contentType, apiRoute: apiRoute.name },
+          data: {
+            ...contentType,
+            displayName: paramCase(contentType.collectionName),
+            fieldName: snakeCase(contentType.collectionName),
+            apiRoute: apiRoute.name,
+          },
         });
 
         console.info(

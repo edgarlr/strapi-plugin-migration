@@ -1,6 +1,5 @@
-const { contentTypes } = require("@strapi/utils/lib");
-const { logError, buildPretiffier } = require("../../../helpers");
 const { getContentTypeProps } = require("../../content-type/helpers");
+const { paramCase } = require("change-case");
 
 const transformPlugins = ({ localized }) => {
   if (!localized) return {};
@@ -15,15 +14,21 @@ const transformPlugins = ({ localized }) => {
   };
 };
 
-module.exports.contentfulTransformer = (data) => ({
-  ...(data.contentTypes && {
-    contentTypes: data.contentTypes.map((contentType) =>
-      transformContentType(contentType)
-    ),
-  }),
-});
+module.exports.contentfulTransformer = (data) => {
+  const allContentTypeNames = data.contentTypes.map((ct) => ct.sys.id);
+  return {
+    ...(data.contentTypes && {
+      contentTypes: data.contentTypes.map((contentType) =>
+        transformContentType(contentType, allContentTypeNames)
+      ),
+    }),
+  };
+};
 
-const transformContentType = ({ sys, name, description, fields }) => {
+const transformContentType = (
+  { sys, name, description, fields },
+  allContentTypeNames
+) => {
   return getContentTypeProps(sys.id, {
     kind: "collectionType",
     displayName: name,
@@ -32,9 +37,35 @@ const transformContentType = ({ sys, name, description, fields }) => {
     // By default Contentful localize all ContentTypes
     ...transformPlugins({ localized: true }),
     attributes: Object.fromEntries(
-      fields.map((field) => [field.id, transformAttribute(field)])
+      fields.map((field) => [
+        field.id,
+        transformAttribute(field, allContentTypeNames),
+      ])
     ),
   });
+};
+
+const transformEntryLinkValidations = (validations, allContentTypeNames) => {
+  if (validations.length === 0) {
+    return Object.fromEntries([
+      [
+        "components",
+        allContentTypeNames.map((link) => `relation.${paramCase(link)}`),
+      ],
+    ]);
+  }
+  return Object.fromEntries(
+    validations.map(({ linkContentType, size }) => ({
+      ...(size?.min !== undefined ? ["min", size.min] : []),
+      ...(size?.max !== undefined ? ["max", size.max] : []),
+      ...(linkContentType
+        ? [
+            "components",
+            linkContentType.map((link) => `relation.${paramCase(link)}`),
+          ]
+        : []),
+    }))
+  );
 };
 
 const transformMediaAllowedTypes = (linkMimetypeGroup) => {
@@ -65,20 +96,23 @@ const transformValidations = (validations = []) => {
   );
 };
 
-const transformAttribute = ({
-  type,
-  required,
-  validations,
-  omitted,
-  localized,
-  linkType,
-  items,
-  id,
+const transformAttribute = (
+  {
+    type,
+    required,
+    validations,
+    omitted,
+    localized,
+    linkType,
+    items,
+    id,
 
-  // No equivalance in Strapi
-  name,
-  disabled,
-}) => {
+    // No equivalance in Strapi
+    name,
+    disabled,
+  },
+  allContentTypeNames
+) => {
   switch (type) {
     case "Symbol": {
       return {
@@ -173,16 +207,13 @@ const transformAttribute = ({
         }
         case "Entry": {
           return {
-            type: "relation",
-            relation: "oneToOne",
-            target: `api::category.category`,
-            ...transformPlugins({ localized }),
+            type: "dynamiczone",
+            required: required,
+            ...transformEntryLinkValidations(validations, allContentTypeNames),
           };
         }
       }
     }
-
-    // linkContentType
     case "Array": {
       // {type: "Array", items: {type: "Symbol"}}
       // {type: "Array", items: {type: "Link", linkType: "Entry"}}
@@ -192,15 +223,9 @@ const transformAttribute = ({
         return {
           type: "enumeration",
           required: required,
-          // enum: yup
-          //   .array()
-          //   .of(yup.string().test(isValidEnum).required())
-          //   .min(1)
-          //   .test(areEnumValuesUnique)
-          //   .required(),
+          // enum: ["list", "of", "options"]
           ...transformPlugins({ localized }),
           // default: yup.string(),
-          // enumName: yup.string().test(isValidName),
         };
       }
       switch (items.linkType) {
@@ -213,9 +238,12 @@ const transformAttribute = ({
             ...transformPlugins({ localized }),
           };
         }
-        // TODO: Needs to be validateds
         case "Entry": {
-          return {};
+          return {
+            type: "dynamiczone",
+            required: required,
+            ...transformEntryLinkValidations(validations, allContentTypeNames),
+          };
         }
       }
     }
