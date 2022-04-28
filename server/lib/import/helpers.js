@@ -19,3 +19,7 @@ module.exports.getCreateAttributeTemplate = (
     attribute
   )});`;
 };
+
+module.exports.getCreateRelationComponentTemplate = ({ collectionName }) => {
+  return `await ${collectionName}.createReleationComponent();`;
+};

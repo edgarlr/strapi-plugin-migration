@@ -3,6 +3,7 @@ const { generateTemplate } = require("../generate-template");
 const {
   getCreateContentTypeTemplate,
   getCreateAttributeTemplate,
+  getCreateRelationComponentTemplate,
 } = require("./helpers");
 const { contentfulTransformer } = require("./transformers/contentful");
 
@@ -33,6 +34,8 @@ const generateContentTypeMigrations = (contentTypes) => {
           getCreateAttributeTemplate(name, attribute, contentType)
         )
         .join("\n")}
+
+      ${getCreateRelationComponentTemplate(contentType)}
     `
       )
       .join("\n");

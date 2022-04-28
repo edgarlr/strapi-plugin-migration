@@ -23,7 +23,7 @@ const getTemplate = async (name) => {
     "migration-function":
       "./src/plugins/migration/server/lib/templates/migration-function.js.hbs",
     "relation-component":
-      "./src/plugins/migration/server/lib/templates/relaton-component.json.hbs",
+      "./src/plugins/migration/server/lib/templates/relation-component.json.hbs",
   };
 
   if (!templateFileNames[name]) {

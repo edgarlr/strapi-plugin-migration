@@ -33,5 +33,18 @@ module.exports.getContentTypeIntentActions = (contentType) => {
     editAttribute: () => {},
 
     deleteAttribute: () => {},
+
+    createRelationComponent: async () => {
+      try {
+        await validate.createRelationComponent(contentType);
+        console.info(
+          chalk.bold("Create Relation Component: "),
+          chalk.bold.yellowBright(contentType.collectionName)
+        );
+      } catch (error) {
+        logError(error);
+        process.exit(1);
+      }
+    },
   };
 };

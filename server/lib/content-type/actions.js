@@ -2,9 +2,9 @@ const chalk = require("chalk");
 const { logError } = require("../../helpers");
 const { sleep } = require("../../utils");
 const { generateTemplate } = require("../generate-template");
-const { getContentTypePath } = require("./helpers");
+const { getContentTypePath, getComponentPath } = require("./helpers");
 
-module.exports.getContentTypeActions = (contentType) => {
+module.exports.getContentTypeActions = (contentType, apiRoute) => {
   const contentTypePath = getContentTypePath(contentType);
 
   return {
@@ -76,6 +76,34 @@ module.exports.getContentTypeActions = (contentType) => {
           logError(error);
           process.exit(1);
         });
+    },
+
+    createRelationComponent: async () => {
+      try {
+        const componentPath = getComponentPath(
+          "relation",
+          contentType.collectionName
+        );
+
+        await generateTemplate({
+          type: "create",
+          path: componentPath,
+          templateFile: "relation-component",
+          data: { ...contentType, apiRoute: apiRoute.name },
+        });
+
+        console.info(
+          chalk.green("✓"),
+          chalk.bold(
+            `Create Component for releations: ${contentType.collectionName}`
+          )
+        );
+
+        await sleep(500);
+      } catch (error) {
+        logError(error);
+        process.exit(1);
+      }
     },
   };
 };

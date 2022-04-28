@@ -24,6 +24,23 @@ module.exports.validate = {
       }
     }
   },
+
+  // Used for emulate the "Entry" field from Contentful
+  createRelationComponent: ({ collectionName }) => {
+    let errors = [];
+
+    if (fs.existsSync(`src/components/relation/${collectionName}`)) {
+      errors.push({
+        path: ["components", collectionName, "name"],
+        message: `Component: \`${collectionName}\` already exists. Try a different name or edit the existing component.`,
+      });
+    }
+
+    if (errors.length !== 0) {
+      logValidationErrors({ details: { errors } });
+      process.exit(1);
+    }
+  },
   bootstrapAPIRoute: (name) => {
     const { isKebabCase } = getLocalFile("@strapi/utils/lib/index.js");
 

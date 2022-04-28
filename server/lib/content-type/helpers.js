@@ -31,3 +31,7 @@ module.exports.getContentTypePath = (contentType, apiRoute = {}) => {
     "schema.json"
   );
 };
+
+module.exports.getComponentPath = (category, name) => {
+  return join("src/components", category, `${name}.json`);
+};
