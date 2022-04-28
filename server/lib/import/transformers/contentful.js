@@ -33,7 +33,7 @@ const transformContentType = (
     kind: "collectionType",
     displayName: name,
     draftAndPublish: true,
-    description: description,
+    // description: description,
     // By default Contentful localize all ContentTypes
     ...transformPlugins({ localized: true }),
     attributes: Object.fromEntries(

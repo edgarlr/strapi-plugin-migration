@@ -1,5 +1,6 @@
 const pluralize = require("pluralize");
 const { join } = require("path");
+const { paramCase } = require("change-case");
 
 module.exports.getContentTypeProps = (collectionName, contentType) => {
   const collectionNamePlural = pluralize.plural(collectionName);
@@ -8,14 +9,14 @@ module.exports.getContentTypeProps = (collectionName, contentType) => {
   const defaultProps = {
     kind: "collectionType",
     collectionName: collectionName,
-    singularName: collectionNameSingular,
-    pluralName: collectionNamePlural,
+    singularName: paramCase(collectionNameSingular),
+    pluralName: paramCase(collectionNamePlural),
     displayName: collectionNameSingular,
     draftAndPublish: false,
     attributes: {},
     apiRoute: {
       action: "create",
-      name: collectionName,
+      name: paramCase(collectionName),
     },
   };
 

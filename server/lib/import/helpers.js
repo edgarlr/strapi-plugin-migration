@@ -21,5 +21,5 @@ module.exports.getCreateAttributeTemplate = (
 };
 
 module.exports.getCreateRelationComponentTemplate = ({ collectionName }) => {
-  return `await ${collectionName}.createReleationComponent();`;
+  return `await ${collectionName}.createRelationComponent();`;
 };

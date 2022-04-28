@@ -53,7 +53,9 @@ module.exports.importData = async (data, opts) => {
   try {
     await generateTemplate({
       type: "create",
-      path: `migrations/import-contentful-data-${Math.random()}.js`,
+      path: `migrations/import-contentful-data-${Math.floor(
+        Math.random() * 8999 + 1000
+      )}.js`,
       templateFile: "migration-function",
       data: { migrations: prettify(migrations) },
     });
