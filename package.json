@@ -1,6 +1,6 @@
 {
   "name": "strapi-plugin-migration",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Migration tooling for Strapi CMS",
   "strapi": {
     "displayName": "Migraton",
@@ -10,6 +10,9 @@
   },
   "bin": {
     "strapi-migration": "./bin/strapi-migration"
+  },
+  "scripts": {
+    "release": "standard-version && git push --follow-tags origin main && npm publish"
   },
   "dependencies": {
     "chalk": "4.1.2",
@@ -58,5 +61,10 @@
   "peerDependencies": {
     "@strapi/strapi": "^4.1.8",
     "@strapi/utils": "^4.1.8"
+  },
+  "devDependencies": {
+    "install": "^0.13.0",
+    "npm": "^8.8.0",
+    "standard-version": "^9.3.2"
   }
 }
