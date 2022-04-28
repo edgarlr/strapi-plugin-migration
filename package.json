@@ -1,10 +1,11 @@
 {
   "name": "strapi-plugin-migration",
   "version": "0.1.0",
-  "description": "This is the description of the plugin.",
+  "description": "Migration tooling for Strapi CMS",
   "strapi": {
+    "displayName": "Migraton",
     "name": "migration",
-    "description": "Description of migration plugin",
+    "description": "Migration tooling for Strapi CMS",
     "kind": "plugin"
   },
   "bin": {
@@ -22,18 +23,37 @@
     "resolve-cwd": "^3.0.0",
     "yup": "^0.32.11"
   },
+  "bugs": {
+    "url": "https://github.com/edgarlr/strapi-plugin-migration/issues"
+  },
+  "homepage": "https://github.com/edgarlr/strapi-plugin-migration#readme",
   "author": {
-    "name": "A Strapi developer"
+    "name": "Edgar López",
+    "url": "https://github.com/edgarlr"
   },
   "maintainers": [
     {
-      "name": "A Strapi developer"
+      "name": "Edgar López",
+      "url": "https://github.com/edgarlr"
     }
   ],
   "engines": {
     "node": ">=12.x.x <=16.x.x",
     "npm": ">=6.0.0"
   },
+  "keywords": [
+    "strapi",
+    "plugin",
+    "strapi-plugin",
+    "migration",
+    "content-migration",
+    "import",
+    "migration-strapi",
+    "strapi-migration",
+    "strapi-migration-data",
+    "strapi-migrations",
+    "strapi-migrations-data"
+  ],
   "license": "MIT",
   "peerDependencies": {
     "@strapi/strapi": "^4.1.8",
