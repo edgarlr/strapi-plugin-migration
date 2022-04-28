@@ -2,6 +2,19 @@ const chalk = require("chalk");
 const { requireOptional } = require("./utils.js");
 const prettier = require("prettier");
 const resolveCwd = require("resolve-cwd");
+const { join } = require("path");
+
+module.exports.getFileContent = (filePath) => {
+  try {
+    const fullFilePath = join(process.cwd(), filePath);
+    return require(fullFilePath);
+  } catch (e) {
+    const message = chalk`{red.bold The ${filePath} script could not be parsed, as it seems to contain syntax errors.}\n`;
+    module.exports.logError(message);
+    module.exports.logError(e);
+    process.exit(1);
+  }
+};
 
 const colors = {
   red: [216, 16, 16],
@@ -57,33 +70,12 @@ module.exports.createValidationError = (
   return { details: { errors: [{ path, message }] } };
 };
 
-module.exports.buildPretiffier = (prettierConfig) => {
-  let config = prettierConfig;
+module.exports.buildPretiffier = () => {
+  const defaultConfig = {
+    singleQuote: true,
+  };
 
-  if (!config) {
-    const currentPath = process.cwd();
-
-    try {
-      config = fs.readFileSync(path.join(currentPath, "/.prettierrc"), {
-        encoding: "utf8",
-        flag: "r",
-      });
-    } catch (err) {
-      console.log("Using default prettier config");
-    }
-
-    if (config) {
-      try {
-        config = JSON.parse(config);
-      } catch (err) {
-        console.error(
-          "Count not parse .prettierrc, does not appear to be JSON"
-        );
-      }
-    }
-  }
-
-  return (text) => prettier.format(text, { ...config, parser: "babel" });
+  return (text) => prettier.format(text, { ...defaultConfig, parser: "babel" });
 };
 
 module.exports.getLocalFile = (path) => {

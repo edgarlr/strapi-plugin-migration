@@ -8,14 +8,22 @@ const {
   writeFilePromise,
   compile,
 } = require("../utils");
+const chalk = require("chalk");
 
 const getTemplate = async (name) => {
   const templateFileNames = {
-    "content-type": "content-type.schema.json.hbs",
-    "core-controller": "core-controller.js.hbs",
-    "core-router": "core-router.js.hbs",
-    "core-service": "core-service.js.hbs",
-    // TODO: Add remaining templates
+    "content-type":
+      "@strapi/generators/lib/templates/content-type.schema.json.hbs",
+    "core-controller":
+      "@strapi/generators/lib/templates/core-controller.js.hbs",
+    "core-router": "@strapi/generators/lib/templates/core-router.js.hbs",
+    "core-service": "@strapi/generators/lib/templates/core-service.js.hbs",
+    // TODO: Add remaining @strapi/generators templates
+    // Other templates
+    "migration-function":
+      "./src/plugins/migration/server/lib/templates/migration-function.js.hbs",
+    "relation-component":
+      "./src/plugins/migration/server/lib/templates/relaton-component.json.hbs",
   };
 
   if (!templateFileNames[name]) {
@@ -23,13 +31,11 @@ const getTemplate = async (name) => {
     process.exit(1);
   }
 
-  const templatePath = resolveCwd.silent(
-    `@strapi/generators/lib/templates/${templateFileNames[name]}`
-  );
+  const templatePath = resolveCwd.silent(templateFileNames[name]);
 
   if (!templatePath) {
     console.log(
-      `Error loading the local ${yellow(
+      `Error loading the local ${chalk.yellow(
         name
       )} command. Strapi might not be installed in your "node_modules". You may need to run "yarn install".`
     );
@@ -81,16 +87,9 @@ const modify = async ({ path, transform }) => {
 
 const generateTemplate = async (templates) => {
   if (Array.isArray(templates)) {
-    await Promise.all(
-      templates.map(async (template) => {
-        return await await generateTemplate(template);
-      })
+    return await Promise.all(
+      templates.map(async (template) => await generateTemplate(template))
     );
-
-    // for (const template in templates) {
-    //   await generateTemplate(template);
-    // }
-    return;
   }
 
   const { type, ...opts } = templates;

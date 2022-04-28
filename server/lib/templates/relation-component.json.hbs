@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_relation_{{pluralName}}",
+  "info": {
+    "displayName": "{{displayName}}",
+    "icon": "address-card",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "{{collectionName}}": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::{{apiRoute}}.{{collectionName}}"
+    }
+  }
+}
