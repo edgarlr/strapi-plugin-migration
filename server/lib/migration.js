@@ -79,7 +79,7 @@ module.exports = {
 
       await sleep(500);
 
-      return getContentTypeActions(contentTypeData);
+      return getContentTypeActions(contentTypeData, apiRoute);
     } catch (error) {
       logError(error);
       process.exit(1);
