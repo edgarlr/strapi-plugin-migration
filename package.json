@@ -20,6 +20,7 @@
     "commander": "^9.2.0",
     "esm": "^3.2.25",
     "inquirer": "^8.2.2",
+    "mime-types": "^2.1.35",
     "node-plop": "^0.30.0",
     "pluralize": "^8.0.0",
     "prettier": "^2.6.2",

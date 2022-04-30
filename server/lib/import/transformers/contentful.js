@@ -1,5 +1,6 @@
 const { getContentTypeProps } = require("../../content-type/helpers");
 const { paramCase } = require("change-case");
+const { groupArraysBy } = require("../../../utils");
 
 const transformPlugins = ({ localized }) => {
   if (!localized) return {};
@@ -248,4 +249,63 @@ const transformAttribute = (
       }
     }
   }
+};
+
+module.exports.transformContentfulEntries = (entries) => {
+  let currentId = 1;
+  const transformedEntries = entries.flatMap(({ fields, sys }) => {
+    const separatedFieldByLocale = groupArraysBy(
+      Object.entries(fields).flatMap(([field, content]) =>
+        Object.entries(content).map(([locale, content]) => ({
+          locale,
+          [field]: content,
+        }))
+      ),
+      "locale"
+    );
+
+    const separatedFieldByLocaleEntries = Object.entries(
+      separatedFieldByLocale
+    );
+
+    const entriesWithLocaleAndId = separatedFieldByLocaleEntries.map(
+      ([locale, content], localeIndex) => {
+        const newContent = content.map(({ locale, ...field }) => field);
+
+        const localizations = separatedFieldByLocaleEntries
+          .map(([locale], i) => ({
+            locale,
+            id: currentId - localeIndex + i,
+          }))
+          .filter((current) => current.locale !== locale);
+
+        const result = Object.assign(
+          {},
+          {
+            meta: {
+              contentType: sys.contentType.sys.id,
+              contentfulId: sys.id,
+            },
+          },
+
+          {
+            locale: locale,
+            id: currentId,
+            ...(localizations.length !== 0 && { localizations }),
+          },
+          ...newContent
+        );
+
+        currentId++;
+
+        return result;
+      }
+    );
+
+    return entriesWithLocaleAndId;
+  });
+
+  const entriesWithTransformedFields = transformFields(entriesWithLocaleAndId);
+
+  return groupArraysBy(transformedEntries, "meta.contentType");
 };

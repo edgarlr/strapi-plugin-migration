@@ -60,3 +60,21 @@ module.exports.splitAt = (string, index) => [
   string.substring(0, index),
   string.substring(index + 1),
 ];
+
+module.exports.resolveObjectValue = (obj, keys) => {
+  return keys.split(".").reduce((cur, key) => cur[key], obj);
+};
+
+module.exports.groupArraysBy = (array, condition) => {
+  return array.reduce((groups, current) => {
+    const currentGroupKey = module.exports.resolveObjectValue(
+      current,
+      condition
+    );
+    if (!groups[currentGroupKey]) {
+      groups[currentGroupKey] = [];
+    }
+    groups[currentGroupKey].push(current);
+    return groups;
+  }, {});
+};
