@@ -252,7 +252,6 @@ const transformAttribute = (
 };
 
 module.exports.transformContentfulEntries = (entries) => {
-  let currentId = 1;
   const transformedEntries = entries.flatMap(({ fields, sys }) => {
     const separatedFieldByLocale = groupArraysBy(
       Object.entries(fields).flatMap(([field, content]) =>
@@ -268,14 +267,14 @@ module.exports.transformContentfulEntries = (entries) => {
       separatedFieldByLocale
     );
 
-    const entriesWithLocaleAndId = separatedFieldByLocaleEntries.map(
+    const entriesWithLocale = separatedFieldByLocaleEntries.map(
       ([locale, content], localeIndex) => {
         const newContent = content.map(({ locale, ...field }) => field);
 
         const localizations = separatedFieldByLocaleEntries
           .map(([locale], i) => ({
             locale,
-            id: currentId - localeIndex + i,
+            localizationId: localeIndex - i,
           }))
           .filter((current) => current.locale !== locale);
 
@@ -286,26 +285,41 @@ module.exports.transformContentfulEntries = (entries) => {
               contentType: sys.contentType.sys.id,
               contentfulId: sys.id,
             },
-          },
-
-          {
             locale: locale,
-            id: currentId,
             ...(localizations.length !== 0 && { localizations }),
           },
           ...newContent
         );
 
-        currentId++;
-
         return result;
       }
     );
 
-    return entriesWithLocaleAndId;
+    return entriesWithLocale;
   });
 
-  const entriesWithTransformedFields = transformFields(entriesWithLocaleAndId);
+  const entriesPerContentType = groupArraysBy(
+    transformedEntries,
+    "meta.contentType"
+  );
 
-  return groupArraysBy(transformedEntries, "meta.contentType");
+  const entriesWithID = Object.fromEntries(
+    Object.entries(entriesPerContentType).map(([contentType, entries]) => {
+      const transformedEntries = entries.map((entry, index) => {
+        const currentIndex = index + 1;
+        entry.id = currentIndex;
+        entry.localizations = entry.localizations?.map((localzation) => {
+          localzation.localizationId =
+            currentIndex - localzation.localizationId;
+          return localzation;
+        });
+
+        return entry;
+      });
+
+      return [contentType, transformedEntries];
+    })
+  );
+
+  return entriesWithID;
 };
