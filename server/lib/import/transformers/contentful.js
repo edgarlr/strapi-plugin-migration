@@ -1,6 +1,7 @@
 const { getContentTypeProps } = require("../../content-type/helpers");
 const { paramCase } = require("change-case");
 const { groupArraysBy } = require("../../../utils");
+const { contentfulDocumentToMarkdown } = require("../utils");
 
 const transformPlugins = ({ localized }) => {
   if (!localized) return {};
@@ -257,7 +258,7 @@ module.exports.transformContentfulEntries = (entries) => {
       Object.entries(fields).flatMap(([field, content]) =>
         Object.entries(content).map(([locale, content]) => ({
           locale,
-          [field]: content,
+          [field]: module.exports.transformContentfulContent(content, entries),
         }))
       ),
       "locale"
@@ -322,4 +323,35 @@ module.exports.transformContentfulEntries = (entries) => {
   );
 
   return entriesWithID;
+};
+
+module.exports.transformContentfulContent = (content, entries) => {
+  if (typeof content !== "object") return content;
+
+  if (Array.isArray(content)) {
+    return content.map((cont) =>
+      module.exports.transformContentfulContent(cont)
+    );
+  }
+
+  if (content?.nodeType === "document") {
+    return contentfulDocumentToMarkdown(content);
+  }
+
+  if (content?.sys?.type === "Link") {
+    if (content?.sys?.linkType === "Asset") {
+      return "Asset";
+    }
+
+    if (content?.sys?.linkType === "Entry") {
+      return [
+        {
+          id: 1,
+          __component: "relation.author",
+        },
+      ];
+    }
+  }
+
+  return content;
 };
