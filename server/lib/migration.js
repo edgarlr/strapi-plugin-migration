@@ -9,6 +9,7 @@ const {
 const { sleep } = require("../utils");
 
 const { join } = require("path");
+const { createEntryWithLocalizations } = require("./create-entry");
 
 module.exports = {
   bootstrapAPIRoute: async ({ name }, contentType) => {
@@ -80,6 +81,62 @@ module.exports = {
       await sleep(500);
 
       return getContentTypeActions(contentTypeData, apiRoute);
+    } catch (error) {
+      logError(error);
+      process.exit(1);
+    }
+  },
+
+  importContent: async (collectionName, { entries }) => {
+    try {
+      const responses = await Promise.allSettled(
+        entries.map(async (entry) => {
+          await createEntryWithLocalizations(collectionName, entry);
+        })
+      );
+
+      responses.forEach((res) => console.info(res));
+
+      if (responses.some((res) => res.status === "rejected")) {
+        return console.info(chalk.red("Some errores ocurred"));
+      }
+
+      return console.info(
+        chalk.green(`Succesfully imported ${entries.length} entries.`)
+      );
+    } catch (error) {
+      logError(error);
+      process.exit(1);
+    }
+  },
+
+  setPublicPermissions: async (newPermissions) => {
+    try {
+      // Find the ID of the public role
+      const publicRole = await strapi
+        .query("plugin::users-permissions.role")
+        .findOne({
+          where: {
+            type: "public",
+          },
+        });
+
+      // Create the new permissions and link them to the public role
+      const allPermissionsToCreate = [];
+      Object.keys(newPermissions).map((controller) => {
+        const actions = newPermissions[controller];
+        const permissionsToCreate = actions.map((action) => {
+          return strapi.query("plugin::users-permissions.permission").create({
+            data: {
+              action: `api::${controller}.${controller}.${action}`,
+              role: publicRole.id,
+            },
+          });
+        });
+        allPermissionsToCreate.push(...permissionsToCreate);
+      });
+
+      await Promise.all(allPermissionsToCreate);
     } catch (error) {
       logError(error);
       process.exit(1);

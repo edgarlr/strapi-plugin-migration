@@ -8,7 +8,8 @@ const inquirer = require("inquirer");
 const config = getConfig();
 
 const app = require("@strapi/strapi");
-const { importData } = require("./lib/import");
+const { importData, importEntries } = require("./lib/import");
+const { validate } = require("./lib/validations");
 
 program.version(version, "-v", "Output the version number");
 
@@ -76,7 +77,7 @@ program
     config.migrationsDir
   )
   .description("Import confiiguration and generate migration file")
-  .action(async (args) => {
+  .action(async () => {
     const { cms } = await inquirer.prompt([
       {
         type: "list",
@@ -106,6 +107,64 @@ program
       }
 
       await importData(data, { cms });
+
+      console.info(chalk.bold.green("🚀 Import successful"));
+      process.exit(0);
+    } catch (error) {
+      logError(error);
+      process.exit(1);
+    }
+  });
+
+// `$ strapi-migrations import:entries .migrations/data/entries.json`
+
+program
+  .command("import:entries")
+  .arguments("<dataPath>")
+  // TODO: Add option to change export path
+  // .option(
+  //   "--export-path",
+  //   'Path to the "migrations" directory (default: "migrations")',
+  //   config.migrationsDir
+  // )
+  .description("Import entries and generate data and migration file")
+  .action(async () => {
+    try {
+      const { cms } = await inquirer.prompt([
+        {
+          type: "list",
+          choices: ["contentful"],
+          message: "Importing from which CMS?",
+          name: "cms",
+        },
+      ]);
+
+      const [, dataPath] = program.args;
+      const { entries } = getFileContent(dataPath);
+
+      console.info(chalk.bold.green("The following import has been planned"));
+
+      validate.transformEntriesData({ cms });
+
+      console.info(
+        chalk.bold("Transform Entries data: "),
+        `${chalk.bold.yellowBright(entries.length)} entries`
+      );
+
+      const { generateMigrationFile } = await inquirer.prompt([
+        {
+          type: "confirm",
+          message: "Do you want to generate the migration files?",
+          name: "generateMigrationFile",
+        },
+      ]);
+
+      if (!generateMigrationFile) {
+        console.warn(chalk.yellow("⚠️ Import aborted"));
+        process.exit(0);
+      }
+
+      await importEntries(entries, { cms });
 
       console.info(chalk.bold.green("🚀 Import successful"));
       process.exit(0);

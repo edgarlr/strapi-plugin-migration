@@ -21,9 +21,9 @@ const getTemplate = async (name) => {
     // TODO: Add remaining @strapi/generators templates
     // Other templates
     "migration-function":
-      "./src/plugins/migration/server/lib/templates/migration-function.js.hbs",
+      "strapi-plugin-migration/server/lib/templates/migration-function.js.hbs",
     "relation-component":
-      "./src/plugins/migration/server/lib/templates/relation-component.json.hbs",
+      "strapi-plugin-migration/server/lib/templates/relation-component.json.hbs",
   };
 
   if (!templateFileNames[name]) {
@@ -56,6 +56,11 @@ const create = async ({ path, templateFile, data }) => {
   try {
     const dir = path.substring(0, path.lastIndexOf("/"));
     await mkdirPromise(dir);
+
+    if (templateFile === "empty-file") {
+      return await writeFilePromise(path, data);
+    }
+
     const template = await getTemplate(templateFile);
     const fileContent = compile(template)(data);
     await writeFilePromise(path, fileContent);

@@ -2,9 +2,11 @@ const {
   logValidationErrors,
   getLocalFile,
   createValidationError,
+  logError,
 } = require("../helpers");
 const { createAttributeValidator } = require("./validations/attribute");
 const fs = require("fs");
+const { paramCase } = require("change-case");
 
 module.exports.validate = {
   apiRoute: ({ action, name }, contentType) => {
@@ -122,6 +124,90 @@ module.exports.validate = {
       });
     } catch (error) {
       return logValidationErrors(error);
+    }
+  },
+
+  importContent: async (collectionName) => {
+    try {
+      let errors = [];
+
+      const usedNames = Object.values(strapi.contentTypes).flatMap((ct) => [
+        ct.info.singularName,
+        ct.info.pluralName,
+      ]);
+
+      if (!usedNames.includes(paramCase(collectionName))) {
+        errors.push({
+          path: ["importContent", "collectionName", collectionName],
+          message: `Content Type name ${collectionName} doesn't exist.`,
+        });
+      }
+
+      if (errors.length !== 0) {
+        logValidationErrors({ details: { errors } });
+        process.exit(1);
+      }
+    } catch (error) {
+      logError(error);
+    }
+  },
+
+  transformEntriesData: ({ cms, entries }) => {
+    const SUPPORTED_CMS = ["contentful"];
+
+    let errors = [];
+
+    if (!SUPPORTED_CMS.includes(cms)) {
+      errors.push({
+        path: ["transformEntriesData", cms, "cms"],
+        message: `Transform Entries CMS: \`${cms}\` is not currently supported.`,
+      });
+    }
+
+    if (errors.length !== 0) {
+      logValidationErrors({ details: { errors } });
+      process.exit(1);
+    }
+  },
+
+  setPublicPermissions: (permission) => {
+    const SUPPORTED_CMS = ["find", "findOne"];
+
+    let errors = [];
+
+    const usedNames = Object.values(strapi.contentTypes).flatMap((ct) => [
+      ct.info.singularName,
+      ct.info.pluralName,
+    ]);
+
+    Object.entries(permission).map(([key, value]) =>
+      value.some((permission) => {
+        if (!SUPPORTED_CMS.includes(permission)) {
+          errors.push({
+            path: ["setPublicPermissions", key, "permission", permission],
+            message: `setPublicPermissions: ${permission} is not a valid permission.`,
+          });
+        }
+      })
+    );
+
+    Object.keys(permission).map((contentType) => {
+      if (!usedNames.includes(contentType)) {
+        errors.push({
+          path: [
+            "setPublicPermissions",
+            contentType,
+            "contentType",
+            contentType,
+          ],
+          message: `ContentType ${contentType} couldn't be found.`,
+        });
+      }
+    });
+
+    if (errors.length !== 0) {
+      logValidationErrors({ details: { errors } });
+      process.exit(1);
     }
   },
 

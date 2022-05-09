@@ -5,6 +5,7 @@ const { getContentTypeProps } = require("./content-type/helpers");
 const {
   getContentTypeIntentActions,
 } = require("./content-type/actions-intent");
+const { sleep } = require("../utils");
 
 module.exports = {
   bootstrapAPIRoute: ({ name }) => {
@@ -38,6 +39,55 @@ module.exports = {
       );
 
       return getContentTypeIntentActions(contentTypeData);
+    } catch (error) {
+      logError(error);
+      process.exit(1);
+    }
+  },
+
+  createEntries: async (contentType, { entries }) => {
+    try {
+      validate.importEntries({ cms, entries });
+
+      checkFileExistsBeforeUpload();
+
+      console.info(
+        chalk.bold(`Import to ${contentType}: `),
+        `${chalk.bold.yellowBright(entries.length)} entries`
+      );
+
+      await sleep(250);
+    } catch (error) {
+      logError(error);
+      process.exit(1);
+    }
+  },
+
+  setPublicPermissions: async (newPermissions) => {
+    try {
+      validate.setPublicPermissions(newPermissions);
+
+      console.info(chalk.bold("Set Public Permissions:"));
+
+      Object.entries(newPermissions).map(([key, value]) =>
+        console.info(`  - ${chalk.italic(key)}: ${JSON.stringify(value)}`)
+      );
+    } catch (error) {
+      logError(error);
+      process.exit(1);
+    }
+  },
+
+  importContent: async (collectionName, { entries }) => {
+    try {
+      validate.importContent(collectionName);
+
+      console.info(
+        chalk.bold("Import Content: "),
+        chalk.bold.yellowBright(collectionName)
+      );
+
+      console.info(` - ${chalk.bold.yellowBright(entries.length)} entries`);
     } catch (error) {
       logError(error);
       process.exit(1);

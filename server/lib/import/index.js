@@ -1,11 +1,16 @@
+const chalk = require("chalk");
 const { logError, buildPretiffier } = require("../../helpers");
+const { sleep } = require("../../utils");
 const { generateTemplate } = require("../generate-template");
 const {
   getCreateContentTypeTemplate,
   getCreateAttributeTemplate,
   getCreateRelationComponentTemplate,
 } = require("./helpers");
-const { contentfulTransformer } = require("./transformers/contentful");
+const {
+  contentfulTransformer,
+  transformContentfulEntries,
+} = require("./transformers/contentful");
 
 // Convenience wrapper around Prettier, so that config doesn't have to be
 // passed every time.
@@ -59,6 +64,42 @@ module.exports.importData = async (data, opts) => {
       templateFile: "migration-function",
       data: { migrations: prettify(migrations) },
     });
+  } catch (error) {
+    logError(error);
+    process.exit(1);
+  }
+};
+
+const getTransformedEntries = (data, { cms }) => {
+  switch (cms) {
+    case "contentful":
+      return transformContentfulEntries(data);
+    default: {
+      logError(`CMS: ${cms} is not supported yet.`);
+      process.exit(1);
+    }
+  }
+};
+
+module.exports.importEntries = async (entries, opts) => {
+  try {
+    const transformedEntries = getTransformedEntries(entries, opts);
+
+    await generateTemplate({
+      type: "create",
+      path: `migrations/transformed-data/transformed-entries-${new Date(
+        Date.now()
+      ).toISOString()}.json`,
+      templateFile: "empty-file",
+      data: JSON.stringify(transformedEntries, null, 2),
+    });
+
+    console.info(
+      chalk.green("✓"),
+      chalk.bold(`Transform: ${entries.length} entries`)
+    );
+
+    await sleep(250);
   } catch (error) {
     logError(error);
     process.exit(1);

@@ -1,5 +1,7 @@
 const { getContentTypeProps } = require("../../content-type/helpers");
 const { paramCase } = require("change-case");
+const { groupArraysBy, removeNullish } = require("../../../utils");
+const { contentfulDocumentToMarkdown } = require("../utils");
 
 const transformPlugins = ({ localized }) => {
   if (!localized) return {};
@@ -248,4 +250,81 @@ const transformAttribute = (
       }
     }
   }
+};
+
+module.exports.transformContentfulEntries = (entries) => {
+  const transformedEntries = entries.map(({ fields, sys }) => {
+    const separatedFieldByLocale = groupArraysBy(
+      Object.entries(fields).flatMap(([field, content]) =>
+        Object.entries(content).map(([locale, content]) => ({
+          locale,
+          [field]: module.exports.transformContentfulContent(content, entries),
+        }))
+      ),
+      "locale"
+    );
+
+    const entriesWithLocale = Object.entries(separatedFieldByLocale).map(
+      ([locale, content]) => {
+        const newContent = content.map(({ locale, ...field }) => field);
+
+        return Object.assign({}, { locale }, ...removeNullish(newContent));
+      }
+    );
+
+    const mainEntry =
+      entriesWithLocale.find((entry) => entry.locale === "en-AU") ??
+      entriesWithLocale[0];
+
+    const localizations = entriesWithLocale.filter(
+      (entry) => entry.locale !== mainEntry.locale
+    );
+
+    return Object.assign({}, mainEntry, {
+      contentType: sys.contentType.sys.id,
+      ...(localizations.length !== 0 && { localizations }),
+    });
+  });
+
+  const entriesPerContentType = groupArraysBy(
+    transformedEntries,
+    "contentType"
+  );
+
+  Object.keys(entriesPerContentType).forEach((contentType) => {
+    entriesPerContentType[contentType].forEach((entry) => {
+      delete entry["contentType"];
+    });
+  });
+
+  return entriesPerContentType;
+};
+
+module.exports.transformContentfulContent = (content, entries) => {
+  if (typeof content !== "object") return content;
+
+  if (Array.isArray(content)) {
+    return content.map((cont) =>
+      module.exports.transformContentfulContent(cont)
+    );
+  }
+
+  if (content?.nodeType === "document") {
+    const doc = contentfulDocumentToMarkdown(content);
+    return doc.content;
+  }
+
+  if (content?.sys?.type === "Link") {
+    if (content?.sys?.linkType === "Asset") {
+      // TODO: ADD Entry Link
+      return null;
+    }
+
+    if (content?.sys?.linkType === "Entry") {
+      // TODO: ADD Entry Link
+      return null;
+    }
+  }
+
+  return content;
 };
