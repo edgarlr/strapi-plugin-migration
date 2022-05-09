@@ -78,3 +78,14 @@ module.exports.groupArraysBy = (array, condition) => {
     return groups;
   }, {});
 };
+
+module.exports.removeNullish = (obj) => {
+  Object.keys(obj).forEach(
+    (k) =>
+      (obj[k] &&
+        typeof obj[k] === "object" &&
+        module.exports.removeNullish(obj[k])) ||
+      (!obj[k] && obj[k] !== undefined && delete obj[k])
+  );
+  return obj;
+};

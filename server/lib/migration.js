@@ -9,6 +9,7 @@ const {
 const { sleep } = require("../utils");
 
 const { join } = require("path");
+const { createEntryWithLocalizations } = require("./create-entry");
 
 module.exports = {
   bootstrapAPIRoute: async ({ name }, contentType) => {
@@ -80,6 +81,29 @@ module.exports = {
       await sleep(500);
 
       return getContentTypeActions(contentTypeData, apiRoute);
+    } catch (error) {
+      logError(error);
+      process.exit(1);
+    }
+  },
+
+  importContent: async (collectionName, { entries }) => {
+    try {
+      const responses = await Promise.allSettled(
+        entries.map(async (entry) => {
+          await createEntryWithLocalizations(collectionName, entry);
+        })
+      );
+
+      responses.forEach((res) => console.info(res));
+
+      if (responses.some((res) => res.status === "rejected")) {
+        return console.info(chalk.red("Some errores ocurred"));
+      }
+
+      return console.info(
+        chalk.green(`Succesfully imported ${entries.length} entries.`)
+      );
     } catch (error) {
       logError(error);
       process.exit(1);

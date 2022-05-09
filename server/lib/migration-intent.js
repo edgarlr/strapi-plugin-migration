@@ -78,6 +78,22 @@ module.exports = {
     }
   },
 
+  importContent: async (collectionName, { entries }) => {
+    try {
+      validate.importContent(collectionName);
+
+      console.info(
+        chalk.bold("Import Content: "),
+        chalk.bold.yellowBright(collectionName)
+      );
+
+      console.info(` - ${chalk.bold.yellowBright(entries.length)} entries`);
+    } catch (error) {
+      logError(error);
+      process.exit(1);
+    }
+  },
+
   editContentType: (contentType, contentTypeId) =>
     console.log("editContentType called with: ", contentType, contentTypeId),
 };

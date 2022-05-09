@@ -2,9 +2,11 @@ const {
   logValidationErrors,
   getLocalFile,
   createValidationError,
+  logError,
 } = require("../helpers");
 const { createAttributeValidator } = require("./validations/attribute");
 const fs = require("fs");
+const { paramCase } = require("change-case");
 
 module.exports.validate = {
   apiRoute: ({ action, name }, contentType) => {
@@ -122,6 +124,31 @@ module.exports.validate = {
       });
     } catch (error) {
       return logValidationErrors(error);
+    }
+  },
+
+  importContent: async (collectionName) => {
+    try {
+      let errors = [];
+
+      const usedNames = Object.values(strapi.contentTypes).flatMap((ct) => [
+        ct.info.singularName,
+        ct.info.pluralName,
+      ]);
+
+      if (!usedNames.includes(paramCase(collectionName))) {
+        errors.push({
+          path: ["importContent", "collectionName", collectionName],
+          message: `Content Type name ${collectionName} doesn't exist.`,
+        });
+      }
+
+      if (errors.length !== 0) {
+        logValidationErrors({ details: { errors } });
+        process.exit(1);
+      }
+    } catch (error) {
+      logError(error);
     }
   },
 
