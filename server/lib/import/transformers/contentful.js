@@ -1,6 +1,6 @@
 const { getContentTypeProps } = require("../../content-type/helpers");
 const { paramCase } = require("change-case");
-const { groupArraysBy } = require("../../../utils");
+const { groupArraysBy, removeNullish } = require("../../../utils");
 const { contentfulDocumentToMarkdown } = require("../utils");
 
 const transformPlugins = ({ localized }) => {
@@ -253,7 +253,7 @@ const transformAttribute = (
 };
 
 module.exports.transformContentfulEntries = (entries) => {
-  const transformedEntries = entries.flatMap(({ fields, sys }) => {
+  const transformedEntries = entries.map(({ fields, sys }) => {
     const separatedFieldByLocale = groupArraysBy(
       Object.entries(fields).flatMap(([field, content]) =>
         Object.entries(content).map(([locale, content]) => ({
@@ -264,65 +264,40 @@ module.exports.transformContentfulEntries = (entries) => {
       "locale"
     );
 
-    const separatedFieldByLocaleEntries = Object.entries(
-      separatedFieldByLocale
-    );
-
-    const entriesWithLocale = separatedFieldByLocaleEntries.map(
-      ([locale, content], localeIndex) => {
+    const entriesWithLocale = Object.entries(separatedFieldByLocale).map(
+      ([locale, content]) => {
         const newContent = content.map(({ locale, ...field }) => field);
 
-        const localizations = separatedFieldByLocaleEntries
-          .map(([locale], i) => ({
-            locale,
-            localizationId: localeIndex - i,
-          }))
-          .filter((current) => current.locale !== locale);
-
-        const result = Object.assign(
-          {},
-          {
-            meta: {
-              contentType: sys.contentType.sys.id,
-              contentfulId: sys.id,
-            },
-            locale: locale,
-            ...(localizations.length !== 0 && { localizations }),
-          },
-          ...newContent
-        );
-
-        return result;
+        return Object.assign({}, { locale }, ...removeNullish(newContent));
       }
     );
 
-    return entriesWithLocale;
+    const mainEntry =
+      entriesWithLocale.find((entry) => entry.locale === "en-AU") ??
+      entriesWithLocale[0];
+
+    const localizations = entriesWithLocale.filter(
+      (entry) => entry.locale !== mainEntry.locale
+    );
+
+    return Object.assign({}, mainEntry, {
+      contentType: sys.contentType.sys.id,
+      ...(localizations.length !== 0 && { localizations }),
+    });
   });
 
   const entriesPerContentType = groupArraysBy(
     transformedEntries,
-    "meta.contentType"
+    "contentType"
   );
 
-  const entriesWithID = Object.fromEntries(
-    Object.entries(entriesPerContentType).map(([contentType, entries]) => {
-      const transformedEntries = entries.map((entry, index) => {
-        const currentIndex = index + 1;
-        entry.id = currentIndex;
-        entry.localizations = entry.localizations?.map((localzation) => {
-          localzation.localizationId =
-            currentIndex - localzation.localizationId;
-          return localzation;
-        });
+  Object.keys(entriesPerContentType).forEach((contentType) => {
+    entriesPerContentType[contentType].forEach((entry) => {
+      delete entry["contentType"];
+    });
+  });
 
-        return entry;
-      });
-
-      return [contentType, transformedEntries];
-    })
-  );
-
-  return entriesWithID;
+  return entriesPerContentType;
 };
 
 module.exports.transformContentfulContent = (content, entries) => {
@@ -335,21 +310,19 @@ module.exports.transformContentfulContent = (content, entries) => {
   }
 
   if (content?.nodeType === "document") {
-    return contentfulDocumentToMarkdown(content);
+    const doc = contentfulDocumentToMarkdown(content);
+    return doc.content;
   }
 
   if (content?.sys?.type === "Link") {
     if (content?.sys?.linkType === "Asset") {
-      return "Asset";
+      // TODO: ADD Entry Link
+      return null;
     }
 
     if (content?.sys?.linkType === "Entry") {
-      return [
-        {
-          id: 1,
-          __component: "relation.author",
-        },
-      ];
+      // TODO: ADD Entry Link
+      return null;
     }
   }
 

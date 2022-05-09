@@ -87,7 +87,7 @@ module.exports.importEntries = async (entries, opts) => {
 
     await generateTemplate({
       type: "create",
-      path: `migrations/transformedData/transformed-entries-${new Date(
+      path: `migrations/transformed-data/transformed-entries-${new Date(
         Date.now()
       ).toISOString()}.json`,
       templateFile: "empty-file",
